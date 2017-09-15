@@ -11,7 +11,10 @@ def main():
 	with open(sys.argv[1]) as f:
 		text = f.read()
 
-	tokenize.tokenize(text)
+	try:
+		tokenize.tokenize(text)
+	except tokenize.TokenizationError:
+		sys.exit(1)
 
 if __name__ == '__main__':
 	main()
