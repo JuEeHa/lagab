@@ -170,6 +170,9 @@ def tokenize(text):
 	tokenized_lines = []
 
 	for line_number, line in enumerate(text.split('\n')):
+		# Have line numbers be 1-indexed
+		line_number = line_number + 1
+
 		try:
 			tokenized_line = tokenize_line(line)
 
