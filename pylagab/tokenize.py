@@ -182,10 +182,6 @@ def tokenize(text):
 			raise err
 
 		else:
-			print(line_number)
-			for token in tokenized_line:
-				print('\t%s: %s' % (token.type.name, token.contents))
-
 			tokenized_lines.append(tokenized_line)
 
 	return tokenized_lines

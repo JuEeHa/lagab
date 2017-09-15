@@ -2,6 +2,7 @@ import os.path
 import sys
 
 import tokenize
+import parse
 
 def main():
 	if len(sys.argv) != 2:
@@ -12,9 +13,18 @@ def main():
 		text = f.read()
 
 	try:
-		tokenize.tokenize(text)
+		tokenized = tokenize.tokenize(text)
+
 	except tokenize.TokenizationError:
 		sys.exit(1)
+
+	try:
+		parsed = parse.parse(tokenized)
+
+	except parse.ParsingError:
+		sys.exit(1)
+
+	print(parsed)
 
 if __name__ == '__main__':
 	main()
