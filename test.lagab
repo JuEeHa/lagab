@@ -1,0 +1,5 @@
+import stdio.print # We need to implement this using foreign calls to C
+
+fn main(): u8 {
+	stdio.print('Hello, ''world''!')
+}
