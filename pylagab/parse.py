@@ -3,7 +3,8 @@ from collections import namedtuple
 from tokenize import token_types
 
 Import_statement = namedtuple('Import_statement', 'imported')
-Function_definition = namedtuple('Function_definition', ['name', 'arguments', 'return_type', 'body'])
+Function_definition = namedtuple('Function_definition', ['name', 'arguments', 'return_types', 'body'])
+Return_statement = namedtuple('Return_statement', 'expression')
 
 class ParsingError(Exception): None
 
@@ -72,14 +73,63 @@ def parse(tokenized_lines):
 		line_number += 1
 		index = 0
 
-	def skip_newlines():
+	def skip_possible_newlines():
 		while not eof() and eol():
 			next_line()
+
+	def skip_newlines():
+		if not eol():
+			token_type, contents = read_token()
+			raise ParsingError('Expected end of line, got "%s" of type %s instead' % (contents, token_type))
+
+		while not eof() and eol():
+			next_line()
+
+	def expression():
+		# TODO: Implement expression parsing
+		while not eol():
+			read_token()
+		return None
+
+	def block():
+		skip_possible_newlines()
+		match_token(token_types.symbol, '{')
+
+		parsed = []
+
+		skip_possible_newlines()
+		while True:
+			token_type, contents = peek_token()
+
+			if eof():
+				raise ParsingError('Unexpected end of file, expected "}"')
+
+			elif token_type == token_types.symbol and contents == '}':
+				# End of block
+				# This is because toplevel() expectes the pointers to be left at an end of line, or it will complain about junk
+				read_token()
+				break
+
+			elif token_type == token_types.identifier and contents == 'ret':
+				# Return statement
+				# Remove 'ret' from tokens to read
+				read_token()
+
+				returned = expression()
+				parsed.append(Return_statement(returned))
+
+			else:
+				# Expression
+				parsed.append(expression())
+
+			skip_newlines()
+
+		return parsed
 
 	def toplevel():
 		parsed = []
 
-		skip_newlines()
+		skip_possible_newlines()
 		while not eof():
 			token_type, contents = read_token()
 
@@ -101,26 +151,18 @@ def parse(tokenized_lines):
 
 				# TODO: Implement argument list parsing
 				match_token(token_types.symbol, '(')
-				skip_newlines()
+				skip_possible_newlines()
 				match_token(token_types.symbol, ')')
 				arguments = []
 
-				skip_newlines()
+				# TODO: Parse multiple returns
+				skip_possible_newlines()
 				match_token(token_types.symbol, ':')
-				return_type = read_contents_type(token_types.identifier)
+				return_types = read_contents_type(token_types.identifier)
 
-				skip_newlines()
-				match_token(token_types.symbol, '{')
+				body = block()
 
-				# TODO: Implement reading function body
-				while True:
-					skip_newlines()
-					token_type, contents = read_token()
-					if token_type == token_types.symbol and contents == '}':
-						break
-				body = None
-
-				parsed.append(Function_definition(name, arguments, return_type, body))
+				parsed.append(Function_definition(name, arguments, return_types, body))
 
 			else:
 				raise ParsingError('Unknown keyword: %s' % contents)
