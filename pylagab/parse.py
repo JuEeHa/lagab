@@ -5,6 +5,10 @@ from tokenize import token_types
 Import_statement = namedtuple('Import_statement', 'imported')
 Function_definition = namedtuple('Function_definition', ['name', 'arguments', 'return_types', 'body'])
 Return_statement = namedtuple('Return_statement', 'expression')
+Integer_literal = namedtuple('Integer_literal', 'value')
+String_literal = namedtuple('String_literal', 'value')
+Function_call = namedtuple('Function_call', ['name', 'arguments'])
+Variable = namedtuple('Variable', 'name')
 
 class ParsingError(Exception): None
 
@@ -49,7 +53,7 @@ def parse(tokenized_lines):
 
 		token = read_token()
 		if token.type != token_type:
-			raise ParsingError('Expected a token of type %s, got %s instead' % (token_type.name, token.type.name))
+			raise ParsingError('Expected a token of type %s, got "%s" of type %s instead' % (token_type.name, token.contents, token.type.name))
 
 		return token.contents
 
@@ -85,11 +89,77 @@ def parse(tokenized_lines):
 		while not eof() and eol():
 			next_line()
 
-	def expression():
-		# TODO: Implement expression parsing
+	def identifier():
+		name = [read_contents_type(token_types.identifier)]
+
 		while not eol():
-			read_token()
-		return None
+			# Look at what the next token is
+			token_type, contents = peek_token()
+
+			if token_type == token_types.symbol and contents == '.':
+				# Dotted name. Remove the '.' from tokens to read and read the next part of the name
+				read_token()
+				name.append(read_contents_type(token_types.identifier))
+
+			else:
+				# Some kind of other token, we've read the whole identifier
+				break
+
+		return name
+
+	def operatorless_expression():
+		token_type, contents = peek_token()
+
+		# Only allows literals or identifiers to start an operatorless expression
+		if token_type not in (token_types.identifier, token_types.integer, token_types.string):
+			raise ParsingError('Expected an identifier or a literal, got "%s" of type %s instead' % (contents, token_type.name))
+
+		# If it's a literal, return the corresponding parse tree node type
+		if token_type == token_types.integer:
+			return Integer_literal(read_token().contents)
+
+		elif token_type == token_types.string:
+			return String_literal(read_token().contents)
+
+		# For identifiers, figure out if it's a function call or a variable
+		name = identifier()
+
+		is_function_call = False
+		if not eol():
+			token_type, contents = peek_token()
+			if token_type == token_types.symbol and contents == '(':
+				is_function_call = True
+
+		if is_function_call:
+			# TODO: Implement support for multiple arguments
+			match_token(token_types.symbol, '(')
+			arguments = [expression()]
+			match_token(token_types.symbol, ')')
+
+			return Function_call(name, arguments)
+
+		else:
+			return Variable(name)
+
+	def expression():
+		# TODO: Implement precedence levels
+		# TODO: Implement parentheses
+		parsed = operatorless_expression()
+
+		while not eol():
+			token_type, contents = peek_token()
+
+			if token_type == token_types.symbol and contents == ')':
+				# End of this subexpression
+				break
+
+			operator = identifier()
+
+			second_argument = operatorless_expression()
+
+			parsed = Function_call(operator, (parsed, second_argument))
+
+		return parsed
 
 	def block():
 		skip_possible_newlines()
@@ -158,7 +228,7 @@ def parse(tokenized_lines):
 				# TODO: Parse multiple returns
 				skip_possible_newlines()
 				match_token(token_types.symbol, ':')
-				return_types = read_contents_type(token_types.identifier)
+				return_types = [read_contents_type(token_types.identifier)]
 
 				body = block()
 
