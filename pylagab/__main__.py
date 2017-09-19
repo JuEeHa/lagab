@@ -24,7 +24,7 @@ def main():
 	except parse.ParsingError:
 		sys.exit(1)
 
-	print(parsed)
+	parse.prettyprint_parsed(parsed)
 
 if __name__ == '__main__':
 	main()

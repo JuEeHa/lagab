@@ -4,12 +4,15 @@ from tokenize import token_types
 
 Import_statement = namedtuple('Import_statement', 'imported')
 Function_definition = namedtuple('Function_definition', ['name', 'arguments', 'return_types', 'body'])
+
+Let_statement = namedtuple('Let_statement', ['name', 'type', 'initializer'])
 Return_statement = namedtuple('Return_statement', 'expression')
-Integer_literal = namedtuple('Integer_literal', 'value')
-String_literal = namedtuple('String_literal', 'value')
+
 Function_call = namedtuple('Function_call', ['name', 'arguments'])
 Variable = namedtuple('Variable', 'name')
-Let_statement = namedtuple('Let_statement', ['name', 'type', 'initializer'])
+
+Integer_literal = namedtuple('Integer_literal', 'value')
+String_literal = namedtuple('String_literal', 'value')
 
 class ParsingError(Exception): None
 
@@ -283,3 +286,46 @@ def parse(tokenized_lines):
 
 	else:
 		return parsed
+
+def prettyprint_parsed(parsed, indentation = 0):
+	def print_indented(*args, **kwargs):
+		nonlocal indentation
+
+		print('\t' * indentation, end = '')
+		print(*args, **kwargs)
+
+	if type(parsed) == list:
+		for node in parsed:
+			prettyprint_parsed(node, indentation)
+
+	elif type(parsed) == Import_statement:
+		print_indented('import: %s' % parsed.imported)
+
+	elif type(parsed) == Function_definition:
+		print_indented('function: name: %s args: %s return: %s' % (parsed.name, parsed.arguments, parsed.return_types))
+		prettyprint_parsed(parsed.body, indentation + 1)
+
+	elif type(parsed) == Let_statement:
+		print_indented('let: name: %s type: %s' % (parsed.name, parsed.type))
+		prettyprint_parsed(parsed.initializer, indentation + 1)
+
+	elif type(parsed) == Return_statement:
+		print_indented('return:')
+		prettyprint_parsed(parsed.expression, indentation + 1)
+
+	elif type(parsed) == Function_call:
+		print_indented('funcall: %s' % parsed.name)
+		for argument in parsed.arguments:
+			prettyprint_parsed(argument, indentation + 1)
+
+	elif type(parsed) == Variable:
+		print_indented('variable: %s' % parsed.name)
+
+	elif type(parsed) == Integer_literal:
+		print_indented('integer: %s' % parsed.value)
+
+	elif type(parsed) == String_literal:
+		print_indented('string: %s' % parsed.value)
+
+	else:
+		print_indented('Unknown node type %s: raw:' % type(parsed), parsed)
