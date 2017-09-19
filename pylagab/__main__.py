@@ -3,6 +3,7 @@ import sys
 
 import tokenize
 import parse
+import gen_ir
 
 def main():
 	if len(sys.argv) != 2:
@@ -25,6 +26,11 @@ def main():
 		sys.exit(1)
 
 	parse.prettyprint_parsed(parsed)
+	print()
+
+	ir = gen_ir.gen_ir(parsed)
+
+	gen_ir.prettyprint_ir(ir)
 
 if __name__ == '__main__':
 	main()
