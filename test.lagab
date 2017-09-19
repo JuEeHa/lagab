@@ -1,7 +1,10 @@
 import stdio.print # We need to implement this using foreign calls to C
 
+let global-variable: u32 = 420 + 108
+
 fn main(): u8 {
+	let foo: u8 = 0
 	stdio.print('Hello, ''world''!')
 	stdio.print(1 + 2 - 5)
-	ret 0
+	ret foo
 }

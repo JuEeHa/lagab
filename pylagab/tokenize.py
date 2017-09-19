@@ -8,7 +8,7 @@ Token = namedtuple('Token', ['type', 'contents'])
 
 class TokenizationError(Exception): None
 
-symbols = {':', '.', '{', '}', '[', ']', '(', ')'}
+symbols = {':', '.', '=', '{', '}', '[', ']', '(', ')'}
 
 def is_digit(char, base = 10):
 	# We only suppor bases 10 and 16

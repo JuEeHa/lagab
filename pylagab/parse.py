@@ -9,6 +9,7 @@ Integer_literal = namedtuple('Integer_literal', 'value')
 String_literal = namedtuple('String_literal', 'value')
 Function_call = namedtuple('Function_call', ['name', 'arguments'])
 Variable = namedtuple('Variable', 'name')
+Let_statement = namedtuple('Let_statement', ['name', 'type', 'initializer'])
 
 class ParsingError(Exception): None
 
@@ -161,7 +162,24 @@ def parse(tokenized_lines):
 
 		return parsed
 
+	def let_statement():
+		match_token(token_types.identifier, 'let')
+
+		variable_name = read_contents_type(token_types.identifier)
+
+		match_token(token_types.symbol, ':')
+
+		# TODO: Support more complex type expressions
+		variable_type = read_contents_type(token_types.identifier)
+
+		match_token(token_types.symbol, '=')
+
+		initializer_expression = expression()
+
+		return Let_statement(variable_name, variable_type, initializer_expression)
+
 	def block():
+		# TODO: Implement nested function definitions
 		skip_possible_newlines()
 		match_token(token_types.symbol, '{')
 
@@ -188,6 +206,10 @@ def parse(tokenized_lines):
 				returned = expression()
 				parsed.append(Return_statement(returned))
 
+			elif token_type == token_types.identifier and contents == 'let':
+				# Let statement
+				parsed.append(let_statement())
+
 			else:
 				# Expression
 				parsed.append(expression())
@@ -201,22 +223,23 @@ def parse(tokenized_lines):
 
 		skip_possible_newlines()
 		while not eof():
-			token_type, contents = read_token()
+			token_type, contents = peek_token()
 
 			if token_type != token_types.identifier:
 				raise ParsingError('Expected a keyword, got %i instead' % token_type.name)
 
 			if contents == 'import':
 				# Import statement
-				path = []
-				path.append(read_contents_type(token_types.identifier))
-				while not eol():
-					match_token(token_types.symbol, '.')
-					path.append(read_contents_type(token_types.identifier))
+				# Remove 'import' from tokens to read
+				read_token()
+
+				path = identifier()
 
 				parsed.append(Import_statement(path))
 
 			elif contents == 'fn':
+				match_token(token_types.identifier, 'fn')
+
 				name = read_contents_type(token_types.identifier)
 
 				# TODO: Implement argument list parsing
@@ -226,6 +249,7 @@ def parse(tokenized_lines):
 				arguments = []
 
 				# TODO: Parse multiple returns
+				# TODO: Support more complex type expressions
 				skip_possible_newlines()
 				match_token(token_types.symbol, ':')
 				return_types = [read_contents_type(token_types.identifier)]
@@ -233,6 +257,10 @@ def parse(tokenized_lines):
 				body = block()
 
 				parsed.append(Function_definition(name, arguments, return_types, body))
+
+			elif contents == 'let':
+				# Let statement
+				parsed.append(let_statement())
 
 			else:
 				raise ParsingError('Unknown keyword: %s' % contents)
