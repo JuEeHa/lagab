@@ -299,7 +299,7 @@ def prettyprint_parsed(parsed, indentation = 0):
 			prettyprint_parsed(node, indentation)
 
 	elif type(parsed) == Import_statement:
-		print_indented('import: %s' % parsed.imported)
+		print_indented('import: %s' % str(parsed.imported))
 
 	elif type(parsed) == Function_definition:
 		print_indented('function: name: %s args: %s return: %s' % (parsed.name, parsed.arguments, parsed.return_types))
@@ -314,18 +314,18 @@ def prettyprint_parsed(parsed, indentation = 0):
 		prettyprint_parsed(parsed.expression, indentation + 1)
 
 	elif type(parsed) == Function_call:
-		print_indented('funcall: %s' % parsed.name)
+		print_indented('funcall: %s' % str(parsed.name))
 		for argument in parsed.arguments:
 			prettyprint_parsed(argument, indentation + 1)
 
 	elif type(parsed) == Variable:
-		print_indented('variable: %s' % parsed.name)
+		print_indented('variable: %s' % str(parsed.name))
 
 	elif type(parsed) == Integer_literal:
-		print_indented('integer: %s' % parsed.value)
+		print_indented('integer: %s' % str(parsed.value))
 
 	elif type(parsed) == String_literal:
-		print_indented('string: %s' % parsed.value)
+		print_indented('string: %s' % str(parsed.value))
 
 	else:
-		print_indented('Unknown node type %s: raw:' % type(parsed), parsed)
+		print_indented('Unknown node type %s: raw:' % str(type(parsed)), parsed)
